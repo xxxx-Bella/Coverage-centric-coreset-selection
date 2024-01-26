@@ -25,9 +25,11 @@ class Trainer(object):
             print('*' * 26)
         for batch_idx, (idx, (inputs, targets)) in enumerate(dataloader):
             inputs, targets = inputs.cuda(non_blocking=True), targets.cuda(non_blocking=True)
+            targets = targets.squeeze()  # if MedMNIST
             optimizer.zero_grad()
             outputs = model(inputs)
             loss = criterion(outputs, targets)
+            # print(f'loss={loss}')
             loss.backward()
             optimizer.step()
 
@@ -50,7 +52,7 @@ class Trainer(object):
 
             if printlog and log_interval and batch_idx % log_interval == 0:
                 print(f"{batch_idx}/{len(dataloader)}")
-                print(f'>> batch_idx [{batch_idx}]: Time consumed: {(datetime.now() - start_time).total_seconds():.2f}')
+                print(f'>> batch_idx [{batch_idx}]: Time consumed: {(datetime.now() - start_time).total_seconds():.2f}, loss: {train_loss:.2f}')
 
             remaining_iterations -= 1
             if remaining_iterations == 0:
@@ -74,6 +76,7 @@ class Trainer(object):
         with torch.no_grad():
             for batch_idx, (inputs, targets) in enumerate(dataloader):
                 inputs, targets = inputs.to(device), targets.to(device)
+                targets = targets.squeeze()  # if MedMNIST
                 outputs = model(inputs)
                 loss = criterion(outputs, targets)
 

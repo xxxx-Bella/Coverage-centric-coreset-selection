@@ -180,8 +180,10 @@ print(f'test set: {len(testset)}')  # cifar10: 10000, organamnist: 17778
 
 # breakpoint()
 
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=16)
-testloader = torch.utils.data.DataLoader(testset, batch_size=512, shuffle=True, num_workers=16)
+# trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=16)
+# testloader = torch.utils.data.DataLoader(testset, batch_size=512, shuffle=True, num_workers=16)
+trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=16, drop_last=True)
+testloader = torch.utils.data.DataLoader(testset, batch_size=512, shuffle=True, num_workers=16, drop_last=True)
 # '''
 
 ## Copy from MedMNIST Below:
