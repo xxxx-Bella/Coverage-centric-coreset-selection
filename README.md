@@ -17,6 +17,9 @@ You can use `train.py` to reproduce baselines and CCS on CIFAR10, CIFAR100, SVHN
 This step is **necessary** to collect training dynamics for future coreset selection.
 ```
 python train.py --dataset cifar10 --gpuid 0 --epochs 200 --lr 0.1 --network resnet18 --batch-size 256 --task-name all-data --base-dir ./data-model/cifar10
+
+python trainMed.py --dataset cifar10 --gpuid 0 --epochs 200 --lr 0.1 --network resnet18 --batch-size 256 --task-name all-data --base-dir ./data-model/cifar10
+python trainMed.py --dataset organamnist --gpuid 0 --epochs 200 --lr 0.1 --network resnet18 --batch-size 256 --task-name all-data --base-dir ./data-model/organamnist --download
 ```
 
 ## Train classifiers with a coreset
