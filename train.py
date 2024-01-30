@@ -24,7 +24,7 @@ parser.add_argument('--epochs', type=int, metavar='N',
                     help='The number of epochs to train a model.')
 parser.add_argument('--iterations', type=int, metavar='N',
                     help='The number of iteration to train a model; conflict with --epoch.')
-parser.add_argument('--batch-size', type=int, default=256, metavar='N',
+parser.add_argument('--batch_size', type=int, default=256, metavar='N',
                     help='input batch size for training (default: 256)')
 parser.add_argument('--lr', type=float, default=0.1)
 parser.add_argument('--network', type=str, default='resnet18', choices=['resnet18', 'resnet50'])
@@ -44,21 +44,21 @@ parser.add_argument('--task-name', type=str, default='tmp',
 
 ######################### Coreset Setting #########################
 parser.add_argument('--coreset', action='store_true', default=False)
-parser.add_argument('--coreset-mode', type=str, choices=['random', 'coreset', 'stratified'])
+parser.add_argument('--coreset_mode', type=str, choices=['random', 'coreset', 'stratified'])
 
 parser.add_argument('--data-score-path', type=str)
-parser.add_argument('--coreset-key', type=str)
+parser.add_argument('--coreset_key', type=str)
 parser.add_argument('--data-score-descending', type=int, default=0,
                     help='Set 1 to use larger score data first.')
 parser.add_argument('--class-balanced', type=int, default=0,
                     help='Set 1 to use the same class ratio as to the whole dataset.')
-parser.add_argument('--coreset-ratio', type=float)
+parser.add_argument('--coreset_ratio', type=float)
 
 #### Double-end Pruning Setting ####
-parser.add_argument('--mis-key', type=str)
+parser.add_argument('--mis_key', type=str)
 parser.add_argument('--mis-data-score-descending', type=int, default=0,
                     help='Set 1 to use larger score data first.')
-parser.add_argument('--mis-ratio', type=float)
+parser.add_argument('--mis_ratio', type=float)
 
 #### Reversed Sampling Setting ####
 parser.add_argument('--reversed-ratio', type=float,

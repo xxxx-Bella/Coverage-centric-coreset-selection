@@ -13,12 +13,20 @@ from core.training import Trainer, TrainingDynamicsLogger
 from core.data import IndexDataset, CIFARDataset, SVHNDataset, CINIC10Dataset
 from core.utils import print_training_info, StdRedirect
 
+# med
+from torchvision.models import resnet18, resnet50                   
+import medmnist
+from medmnist import INFO, Evaluator
+import torch.utils.data as data
+
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 
 ######################### Data Setting #########################
 parser.add_argument('--batch-size', type=int, default=256, metavar='N',
                     help='input batch size for training.')
-parser.add_argument('--dataset', type=str, default='cifar10', choices=['cifar10', 'cifar100', 'tiny', 'svhn', 'cinic10'])
+parser.add_argument('--dataset', type=str, default='cifar10', choices=['cifar10', 'cifar100', 'tiny', 'svhn', 'cinic10', 'organamnist', 'organsmnist'])
+parser.add_argument('--download', action="store_true")  # med
+parser.add_argument('--as_rgb', help='convert the grayscale image to RGB', action="store_true")  # med
 
 ######################### Path Setting #########################
 parser.add_argument('--data-dir', type=str, default='../data/',
@@ -49,6 +57,11 @@ if dataset in ['cifar10', 'svhn', 'cinic10']:
     num_classes=10
 elif dataset == 'cifar100':
     num_classes=100
+else:
+    info = INFO[args.dataset]
+    download = args.download
+    as_rgb = args.as_rgb
+    num_classes = len(info['label'])
 
 
 ######################### Ftn definition #########################
@@ -60,17 +73,22 @@ def post_training_metrics(model, dataloader, data_importance, device):
 
     for batch_idx, (idx, (inputs, targets)) in enumerate(dataloader):
         inputs, targets = inputs.to(device), targets.to(device)
+        targets = targets.squeeze()  # if MedMNIST
 
         logits = model(inputs)
         prob = nn.Softmax(dim=1)(logits)
 
         entropy = -1 * prob * torch.log(prob + 1e-10)
         entropy = torch.sum(entropy, dim=1).detach().cpu()
-
-        loss = nn.CrossEntropyLoss(reduction='none')(logits, targets).detach().cpu()
+        # breakpoint()
+        # print(f'logits: {logits.shape}, targets: {targets.shape}')
+        loss = nn.CrossEntropyLoss(reduction='none')(logits, targets).detach().cpu()  # cifar10: logits - torch.Size([256, 10]), targets - torch.Size([256])
 
         data_importance['entropy'][idx] = entropy
         data_importance['loss'][idx] = loss
+    
+    # print(f'data_importance: {data_importance}')
+    # breakpoint()
 
 """Calculate td metrics"""
 def training_dynamics_metrics(td_log, dataset, data_importance):
@@ -89,14 +107,16 @@ def training_dynamics_metrics(td_log, dataset, data_importance):
     data_importance['accumulated_margin'] = torch.zeros(data_size).type(torch.float32)
 
     def record_training_dynamics(td_log):
-        output = torch.exp(td_log['output'].type(torch.float))
-        predicted = output.argmax(dim=1)
-        index = td_log['idx'].type(torch.long)
+        output = torch.exp(td_log['output'].type(torch.float))  # cifar10: torch.Size([256, 10]), organamnist: torch.Size([256, 11])
+        predicted = output.argmax(dim=1)                        # cifar10: torch.Size([256]), organamnist: torch.Size([256])
+        index = td_log['idx'].type(torch.long)                  # cifar10: torch.Size([256]), organamnist: torch.Size([256])
 
-        label = targets[index]
+        label = targets[index]                              # cifar10: torch.Size([256]), organamnist: torch.Size([256, 1])
+        label = label.squeeze()                             # organamnist: torch.Size([256]) (med)
 
-        correctness = (predicted == label).type(torch.int)
-        data_importance['forgetting'][index] += torch.logical_and(data_importance['last_correctness'][index] == 1, correctness == 0)
+        correctness = (predicted == label).type(torch.int)  # cifar10: torch.Size([256])
+        # breakpoint()
+        data_importance['forgetting'][index] += torch.logical_and(data_importance['last_correctness'][index] == 1, correctness == 0)  # cifar10: torch.Size([256])
         data_importance['last_correctness'][index] = correctness
         data_importance['correctness'][index] += data_importance['last_correctness'][index]
 
@@ -120,7 +140,9 @@ def EL2N(td_log, dataset, data_importance, max_epoch=10):
     for i in range(data_size):
         _, (_, y) = dataset[i]
         targets.append(y)
-    targets = torch.tensor(targets)
+    targets = torch.tensor(targets)  # cifar10: torch.Size([50000]), organamnist: torch.Size([34561, 1])
+    targets = targets.squeeze()      # med; organamnist: torch.Size([34561])
+    # breakpoint()
     data_importance['targets'] = targets.type(torch.int32)
     data_importance['el2n'] = torch.zeros(data_size).type(torch.float32)
     l2_loss = torch.nn.MSELoss(reduction='none')
@@ -164,6 +186,12 @@ elif dataset == 'svhn':
     trainset = SVHNDataset.get_svhn_train(data_dir, transform = transform_identical)
 elif args.dataset == 'cinic10':
     trainset = CINIC10Dataset.get_cinic10_train(data_dir, transform = transform_identical)
+else:  # MedMNIST
+    DataClass = getattr(medmnist, info['python_class'])
+    data_transform = transforms.Compose(
+        [transforms.ToTensor(),
+        transforms.Normalize(mean=[.5], std=[.5])])
+    trainset = DataClass(split='train', transform=data_transform, download=download, as_rgb=as_rgb)
 
 trainset = IndexDataset(trainset)
 print(len(trainset))
@@ -171,7 +199,7 @@ print(len(trainset))
 data_importance = {}
 
 trainloader = torch.utils.data.DataLoader(
-    trainset, batch_size=args.batch_size, shuffle=False, num_workers=16)
+    trainset, batch_size=args.batch_size, shuffle=False, num_workers=16, drop_last=True)  # add drop_last
 
 model = resnet('resnet18', num_classes=num_classes, device=device)
 model = model.to(device)
