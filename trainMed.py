@@ -43,11 +43,11 @@ parser.add_argument('--iterations-per-testing', type=int, default=800, metavar='
                     help='The number of iterations for testing model')
 
 ######################### Path Setting #########################
-parser.add_argument('--data-dir', type=str, default='../data/',
+parser.add_argument('--data_dir', type=str, default='../data/',
                     help='The dir path of the data.')
-parser.add_argument('--base-dir', type=str,
+parser.add_argument('--base_dir', type=str,
                     help='The base dir of this project.')
-parser.add_argument('--task-name', type=str, default='tmp',
+parser.add_argument('--task_name', type=str, default='tmp',
                     help='The name of the training task.')
 
 ######################### Coreset Setting #########################
@@ -158,7 +158,7 @@ if args.coreset:
         coreset_index = score_index[coreset_index]
 
     trainset = torch.utils.data.Subset(trainset, coreset_index)
-    print(len(trainset))
+    print('after coreset selection, trainset:', len(trainset))
 ######################### Coreset Selection end #########################
 
 trainset = IndexDataset(trainset)
@@ -173,7 +173,8 @@ elif args.dataset == 'svhn':
 elif args.dataset == 'cinic10':
     testset = CINIC10Dataset.get_cinic10_test(data_dir)
 elif args.dataset == 'organamnist' or args.dataset == 'organsmnist':
-    testset = testset = DataClass(split='test', transform=data_transform, download=download, as_rgb=as_rgb)
+    # testset = DataClass(split='test', transform=data_transform, download=download, as_rgb=as_rgb)
+    testset = DataClass(split='val', transform=data_transform, download=download, as_rgb=as_rgb)
 print(f'test set: {len(testset)}')  # cifar10: 10000, organamnist: 17778
 
 # breakpoint()
@@ -220,6 +221,9 @@ print(f'Total epoch: {num_of_iterations // iterations_per_epoch}')
 print(f'Iterations per epoch: {iterations_per_epoch}')
 print(f'Total iterations: {num_of_iterations}')
 print(f'Epochs per testing: {epoch_per_testing}')
+print(f'Start time: {start_time}')
+
+
 
 trainer = Trainer()
 TD_logger = TrainingDynamicsLogger()

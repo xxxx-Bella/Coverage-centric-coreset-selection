@@ -22,18 +22,18 @@ import torch.utils.data as data
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 
 ######################### Data Setting #########################
-parser.add_argument('--batch-size', type=int, default=256, metavar='N',
+parser.add_argument('--batch_size', type=int, default=256, metavar='N',
                     help='input batch size for training.')
 parser.add_argument('--dataset', type=str, default='cifar10', choices=['cifar10', 'cifar100', 'tiny', 'svhn', 'cinic10', 'organamnist', 'organsmnist'])
 parser.add_argument('--download', action="store_true")  # med
 parser.add_argument('--as_rgb', help='convert the grayscale image to RGB', action="store_true")  # med
 
 ######################### Path Setting #########################
-parser.add_argument('--data-dir', type=str, default='../data/',
+parser.add_argument('--data_dir', type=str, default='../data/',
                     help='The dir path of the data.')
-parser.add_argument('--base-dir', type=str,
+parser.add_argument('--base_dir', type=str,
                     help='The base dir of this project.')
-parser.add_argument('--task-name', type=str, default='tmp',
+parser.add_argument('--task_name', type=str, default='tmp',
                     help='The name of the training task.')
 
 ######################### GPU Setting #########################
