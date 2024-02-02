@@ -147,7 +147,7 @@ def EL2N(td_log, dataset, data_importance, max_epoch=10):
     data_importance['el2n'] = torch.zeros(data_size).type(torch.float32)
     l2_loss = torch.nn.MSELoss(reduction='none')
 
-    def record_training_dynamics(td_log):
+    def record_training_dynamics(td_log):  # for each item in td_log
         output = torch.exp(td_log['output'].type(torch.float))
         predicted = output.argmax(dim=1)
         index = td_log['idx'].type(torch.long)
@@ -155,26 +155,34 @@ def EL2N(td_log, dataset, data_importance, max_epoch=10):
         label = targets[index]
 
         label_onehot = torch.nn.functional.one_hot(label, num_classes=num_classes)
-        el2n_score = torch.sqrt(l2_loss(label_onehot,output).sum(dim=1))
+        el2n_score = torch.sqrt(l2_loss(label_onehot, output).sum(dim=1))  # ||p-y||=sqrt(sum(p-y)2)
 
         data_importance['el2n'][index] += el2n_score
 
     for i, item in enumerate(td_log):
+        print(f'td_log length: {len(td_log)}')  # 10800: organsmnist (all-data) Total iterations
+        # item: {'epoch': 0, 'iteration': 0, 'idx': tensor([...]), 'output': tensor([[..],..., [..]])}
+        # len(item['idx']) = len(item['output']) = 256 (batch_size); len(item['output'][0]) = 11 (num_classes)
+        breakpoint()
+
         if i % 10000 == 0:
             print(i)
+        # >>>>>>>>>> original:
         if item['epoch'] == max_epoch:
             return
+        # >>>>>>>>>>
+        # >>>>>>>>>> early epoch and post epoch
+        if item['epoch'] == max_epoch:
+            return
+
         record_training_dynamics(item)
 #########################
 
 GPUID = args.gpuid
 os.environ["CUDA_VISIBLE_DEVICES"] = str(GPUID)
-
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-transform_identical = transforms.Compose([
-            transforms.ToTensor(),
-        ])
+transform_identical = transforms.Compose([transforms.ToTensor(),])
 
 data_dir =  os.path.join(args.data_dir, dataset)
 print(f'dataset: {dataset}')
@@ -212,11 +220,14 @@ model.eval()
 with open(td_path, 'rb') as f:
      pickled_data = pickle.load(f)
 
-training_dynamics = pickled_data['training_dynamics']
+training_dynamics = pickled_data['training_dynamics']  # td_log
+early_max_epoch = 10
+post_min_epoch = 100
+post_max_epoch = 120
 
 post_training_metrics(model, trainloader, data_importance, device)
 training_dynamics_metrics(training_dynamics, trainset, data_importance)
-EL2N(training_dynamics, trainset, data_importance, max_epoch=10)
+EL2N(training_dynamics, trainset, data_importance, max_epoch=early_max_epoch)
 
 print(f'Saving data score at {data_score_path}')
 with open(data_score_path, 'wb') as handle:
