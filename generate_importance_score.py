@@ -88,7 +88,6 @@ def post_training_metrics(model, dataloader, data_importance, device):
         data_importance['loss'][idx] = loss
     
     # print(f'data_importance: {data_importance}')
-    # breakpoint()
 
 """Calculate td metrics"""
 def training_dynamics_metrics(td_log, dataset, data_importance):
@@ -115,7 +114,6 @@ def training_dynamics_metrics(td_log, dataset, data_importance):
         label = label.squeeze()                             # organamnist: torch.Size([256]) (med)
 
         correctness = (predicted == label).type(torch.int)  # cifar10: torch.Size([256])
-        # breakpoint()
         data_importance['forgetting'][index] += torch.logical_and(data_importance['last_correctness'][index] == 1, correctness == 0)  # cifar10: torch.Size([256])
         data_importance['last_correctness'][index] = correctness
         data_importance['correctness'][index] += data_importance['last_correctness'][index]
@@ -129,11 +127,12 @@ def training_dynamics_metrics(td_log, dataset, data_importance):
 
     for i, item in enumerate(td_log):
         if i % 10000 == 0:
-            print(i)
+            print('training_dynamics_metrics, td_log', i)
+
         record_training_dynamics(item)
 
 """Calculate td metrics"""
-def EL2N(td_log, dataset, data_importance, max_epoch=10):
+def EL2N(td_log, dataset, data_importance, early_max_epoch=10, latter_min_epoch=100, latter_max_epoch=120):
     targets = []
     data_size = len(dataset)
 
@@ -157,25 +156,38 @@ def EL2N(td_log, dataset, data_importance, max_epoch=10):
         label_onehot = torch.nn.functional.one_hot(label, num_classes=num_classes)
         el2n_score = torch.sqrt(l2_loss(label_onehot, output).sum(dim=1))  # ||p-y||=sqrt(sum(p-y)2)
 
-        data_importance['el2n'][index] += el2n_score
+        # data_importance['el2n'][index] += el2n_score  # original
+        data_importance['el2n'][index] += el2n_score    # save a el2n_score_list
 
+    
+    epoches = []
+    print(f'td_log length: {len(td_log)}')  # 10800: organsmnist (all-data) Total iterations
     for i, item in enumerate(td_log):
-        print(f'td_log length: {len(td_log)}')  # 10800: organsmnist (all-data) Total iterations
         # item: {'epoch': 0, 'iteration': 0, 'idx': tensor([...]), 'output': tensor([[..],..., [..]])}
         # len(item['idx']) = len(item['output']) = 256 (batch_size); len(item['output'][0]) = 11 (num_classes)
-        breakpoint()
-
+        epoches.append(item['epoch'])
         if i % 10000 == 0:
-            print(i)
+            print('EL2N, td_log', i)
         # >>>>>>>>>> original:
-        if item['epoch'] == max_epoch:
+        if item['epoch'] == early_max_epoch:
+            print('epoches:', len(epoches))  # 540 (54*10)=(Iterationsper epoch * early_max_epoch)
+            # breakpoint()
             return
-        # >>>>>>>>>>
-        # >>>>>>>>>> early epoch and post epoch
-        if item['epoch'] == max_epoch:
-            return
-
         record_training_dynamics(item)
+        # >>>>>>>>>>
+
+        # >>>>>>>>>> 1 calculate Variance
+        # el2n_score_list: for each element, divide mean
+        # >>>>>>>>>>
+
+
+        # # >>>>>>>>>> 2 early epoch and latter epoch
+        # if (item['epoch'] <= early_max_epoch) or ((item['epoch'] > latter_min_epoch) and (item['epoch'] < latter_max_epoch)):
+        #     record_training_dynamics(item)
+        # else:
+        #     return
+        # # >>>>>>>>>>
+        
 #########################
 
 GPUID = args.gpuid
@@ -222,12 +234,12 @@ with open(td_path, 'rb') as f:
 
 training_dynamics = pickled_data['training_dynamics']  # td_log
 early_max_epoch = 10
-post_min_epoch = 100
-post_max_epoch = 120
+latter_min_epoch = 100
+latter_max_epoch = 120
 
 post_training_metrics(model, trainloader, data_importance, device)
 training_dynamics_metrics(training_dynamics, trainset, data_importance)
-EL2N(training_dynamics, trainset, data_importance, max_epoch=early_max_epoch)
+EL2N(training_dynamics, trainset, data_importance, early_max_epoch=early_max_epoch, latter_min_epoch=latter_min_epoch, latter_max_epoch=latter_max_epoch)
 
 print(f'Saving data score at {data_score_path}')
 with open(data_score_path, 'wb') as handle:
