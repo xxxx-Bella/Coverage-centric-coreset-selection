@@ -46,7 +46,7 @@ Here we use 90% pruning rate on CIFAR10 as an example.
 python train.py --dataset cifar10 --gpuid 0 --iterations 40000 --task_name ccs-0.1 --base_dir ./data-model/cifar10/ccs --coreset --coreset_mode stratified --data-score-path ./data-model/cifar10/all-data/data-score-all-data.pickle --coreset_key accumulated_margin --coreset_ratio 0.1 --mis_ratio 0.3
 
 # organamnist: 0.3; organsmnist: 0.3
-python trainMed.py --dataset organamnist --gpuid 0 --iterations 20000 --task_name ccs-0.8-1 --base_dir ./data-model/organamnist/ccs --coreset --coreset_mode stratified --data-score-path ./data-model/organamnist/all-data/data-score-all-data.pickle --coreset_key accumulated_margin --coreset_ratio 0.8 --mis_ratio 0.3 --as_rgb
+python trainMed.py --dataset organamnist --gpuid 0 --iterations 20000 --task_name ccs-0.9-1 --base_dir ./data-model/organamnist/ccs --coreset --coreset_mode stratified --data-score-path ./data-model/organamnist/all-data/data-score-all-data.pickle --coreset_key accumulated_margin --coreset_ratio 0.9 --mis_ratio 0.3 --as_rgb
 
 python trainMed.py --dataset organsmnist --gpuid 0 --iterations 40000 --task_name ccs-0.9-1 --base_dir ./data-model/organsmnist/ccs --coreset --coreset_mode stratified --data-score-path ./data-model/organsmnist/all-data/data-score-all-data.pickle --coreset_key accumulated_margin --coreset_ratio 0.9 --mis_ratio 0.3 --as_rgb
 
@@ -58,7 +58,7 @@ python trainMed.py --dataset organsmnist --gpuid 0 --iterations 40000 --task_nam
 python train.py --dataset cifar10 --gpuid 0 --iterations 40000 --task_name random-0.1 --base_dir ./data-model/cifar10/random --coreset --coreset_mode random --coreset_ratio 0.1
 
 # organamnist: 0.1, 0.3; organsmnist: 0.1
-python trainMed.py --dataset organamnist --gpuid 0 --iterations 20000 --task_name random-0.4-1 --base_dir ./data-model/organamnist/random --coreset --coreset_mode random --coreset_ratio 0.4 --as_rgb
+python trainMed.py --dataset organamnist --gpuid 0 --iterations 20000 --task_name random-0.9-1 --base_dir ./data-model/organamnist/random --coreset --coreset_mode random --coreset_ratio 0.9 --as_rgb
 python trainMed.py --dataset organsmnist --gpuid 0 --iterations 40000 --task_name random-0.8-1 --base_dir ./data-model/organsmnist/random --coreset --coreset_mode random --coreset_ratio 0.8 --as_rgb
 
 
@@ -69,8 +69,9 @@ python trainMed.py --dataset organsmnist --gpuid 0 --iterations 40000 --task_nam
 python train.py --dataset cifar10 --gpuid 0 --iterations 40000 --task_name forgetting-0.1 --base_dir ./data-model/cifar10/forgetting --coreset --coreset_mode coreset --data-score-path ./data-model/cifar10/all-data/data-score-all-data.pickle --coreset_key forgetting --coreset_ratio 0.1 --data-score-descending 1
 
 # organamnist: 0.3; organsmnist: 0.3
-python trainMed.py --dataset organamnist --gpuid 0 --iterations 20000 --task_name forgetting-0.8-1 --base_dir ./data-model/organamnist/forgetting --coreset --coreset_mode coreset --data-score-path ./data-model/organamnist/all-data/data-score-all-data.pickle --coreset_key forgetting --coreset_ratio 0.8 --data-score-descending 1 --as_rgb
-python trainMed.py --dataset organsmnist --gpuid 0 --iterations 20000 --task_name forgetting-0.8-1 --base_dir ./data-model/organsmnist/forgetting --coreset --coreset_mode coreset --data-score-path ./data-model/organsmnist/all-data/data-score-all-data.pickle --coreset_key forgetting --coreset_ratio 0.8 --data-score-descending 1 --as_rgb
+python trainMed.py --dataset organamnist --gpuid 0 --iterations 20000 --task_name forgetting-0.9-1 --base_dir ./data-model/organamnist/forgetting --coreset --coreset_mode coreset --data-score-path ./data-model/organamnist/all-data/data-score-all-data.pickle --coreset_key forgetting --coreset_ratio 0.9 --data-score-descending 1 --as_rgb
+
+python trainMed.py --dataset organsmnist --gpuid 0 --iterations 20000 --task_name forgetting-0.9-1 --base_dir ./data-model/organsmnist/forgetting --coreset --coreset_mode coreset --data-score-path ./data-model/organsmnist/all-data/data-score-all-data.pickle --coreset_key forgetting --coreset_ratio 0.9 --data-score-descending 1 --as_rgb
 ```
 
 **AUM**
