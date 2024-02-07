@@ -187,9 +187,9 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=512, shuffle=True, 
 
 
 iterations_per_epoch = len(trainloader)
-if args.iterations is None:
+if args.iterations is None:  # all-data
     num_of_iterations = iterations_per_epoch * args.epochs
-else:
+else:  # coreset
     num_of_iterations = args.iterations
 
 if args.dataset in ['cifar10', 'svhn', 'cinic10']:
@@ -217,7 +217,7 @@ optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay
 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_of_iterations, eta_min=1e-4)
 epoch_per_testing = args.iterations_per_testing // iterations_per_epoch
 
-print(f'Total epoch: {num_of_iterations // iterations_per_epoch}')
+print(f'\nTotal epoch: {num_of_iterations // iterations_per_epoch}')
 print(f'Iterations per epoch: {iterations_per_epoch}')
 print(f'Total iterations: {num_of_iterations}')
 print(f'Epochs per testing: {epoch_per_testing}')
@@ -233,6 +233,7 @@ best_epoch = -1
 
 current_epoch = 0
 while num_of_iterations > 0:
+    # 取 剩余迭代次数 与 每轮迭代次数 的较小值
     iterations_epoch = min(num_of_iterations, iterations_per_epoch)
     trainer.train(current_epoch, -1, model, trainloader, optimizer, criterion, scheduler, device, TD_logger=TD_logger, log_interval=60, printlog=True)
 

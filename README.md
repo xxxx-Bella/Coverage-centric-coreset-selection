@@ -18,8 +18,9 @@ This step is **necessary** to collect training dynamics for future coreset selec
 ```
 python train.py --dataset cifar10 --gpuid 0 --epochs 200 --lr 0.1 --network resnet18 --batch_size 256 --task_name all-data --base_dir ./data-model/cifar10
 
-# organamnist; organsmnist
 python trainMed.py --dataset cifar10 --gpuid 0 --epochs 200 --lr 0.1 --network resnet18 --batch_size 256 --task_name all-data --base_dir ./data-model/cifar10
+
+# organamnist; organsmnist
 python trainMed.py --dataset organamnist --gpuid 0 --epochs 200 --lr 0.1 --network resnet18 --batch_size 256 --task_name all-data --base_dir ./data-model/organamnist --download --as_rgb
 python trainMed.py --dataset organsmnist --gpuid 0 --epochs 200 --lr 0.1 --network resnet18 --batch_size 256 --task_name all-data --base_dir ./data-model/organsmnist --download --as_rgb
 
@@ -36,6 +37,8 @@ python generate_importance_score.py --gpuid 0 --base_dir ./data-model/cifar10 --
 # organamnist; organsmnist
 python generate_importance_score.py --dataset organamnist --gpuid 0 --base_dir ./data-model/organamnist --task_name all-data --as_rgb
 python generate_importance_score.py --dataset organsmnist --gpuid 0 --base_dir ./data-model/organsmnist --task_name all-data --as_rgb
+python generate_importance_score_original.py --dataset organsmnist --gpuid 0 --base_dir ./data-model/organsmnist --task_name all-data --as_rgb
+
 ```
 
 ### Train a model with a specific coreset selection method:
@@ -58,7 +61,7 @@ python trainMed.py --dataset organsmnist --gpuid 0 --iterations 40000 --task_nam
 python train.py --dataset cifar10 --gpuid 0 --iterations 40000 --task_name random-0.1 --base_dir ./data-model/cifar10/random --coreset --coreset_mode random --coreset_ratio 0.1
 
 # organamnist: 0.1, 0.3; organsmnist: 0.1
-python trainMed.py --dataset organamnist --gpuid 0 --iterations 20000 --task_name random-0.9-1 --base_dir ./data-model/organamnist/random --coreset --coreset_mode random --coreset_ratio 0.9 --as_rgb
+python trainMed.py --dataset organamnist --gpuid 0 --iterations 20000 --task_name random-0.5-2 --base_dir ./data-model/organamnist/random --coreset --coreset_mode random --coreset_ratio 0.5 --as_rgb
 python trainMed.py --dataset organsmnist --gpuid 0 --iterations 40000 --task_name random-0.8-1 --base_dir ./data-model/organsmnist/random --coreset --coreset_mode random --coreset_ratio 0.8 --as_rgb
 
 
@@ -90,7 +93,14 @@ python train.py --dataset cifar10 --gpuid 0 --iterations 40000 --task_name el2n-
 
 # organamnist: 0.3; organsmnist: 0.3
 python trainMed.py --dataset organamnist --gpuid 0 --iterations 40000 --task_name el2n-0.8-1 --base_dir ./data-model/organamnist/el2n --coreset --coreset_mode coreset --data-score-path ./data-model/organamnist/all-data/data-score-all-data.pickle --coreset_key el2n --coreset_ratio 0.8 --data-score-descending 1 --as_rgb
+
 python trainMed.py --dataset organsmnist --gpuid 0 --iterations 40000 --task_name el2n-0.1-1 --base_dir ./data-model/organsmnist/el2n --coreset --coreset_mode coreset --data-score-path ./data-model/organsmnist/all-data/data-score-all-data.pickle --coreset_key el2n --coreset_ratio 0.1 --data-score-descending 1 --as_rgb
+
+# 1. Variance
+python trainMed.py --dataset organsmnist --gpuid 0 --iterations 40000 --task_name el2n-var-0.3 --base_dir ./data-model/organsmnist/el2n --coreset --coreset_mode coreset --data-score-path ./data-model/organsmnist/all-data/data-score-all-data.pickle --coreset_key el2n --coreset_ratio 0.3 --data-score-descending 1 --as_rgb
+
+# 2. Epoch
+python trainMed.py --dataset organsmnist
 ```
 
 # ImageNet training code

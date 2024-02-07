@@ -144,56 +144,51 @@ def EL2N(td_log, dataset, data_importance, early_max_epoch=10, latter_min_epoch=
     # breakpoint()
     data_importance['targets'] = targets.type(torch.int32)
     data_importance['el2n'] = torch.zeros(data_size).type(torch.float32)
-
-    data_importance['el2n_all'] = torch.zeros((early_max_epoch, data_size)).type(torch.float32)  # 存储每个epoch的el2n_score
-
     l2_loss = torch.nn.MSELoss(reduction='none')
 
-    def record_training_dynamics(item, epoch_idx):  # for each item in td_log
-        output = torch.exp(item['output'].type(torch.float))
-        predicted = output.argmax(dim=1)
-        index = item['idx'].type(torch.long)
+    # for each iteration，训练 256 个不同的 sample
+    def record_training_dynamics(td_log):  # for each item in td_log
+        output = torch.exp(td_log['output'].type(torch.float))  # [256, 11]
+        predicted = output.argmax(dim=1)            # [256]
+        index = td_log['idx'].type(torch.long)      # [256]
 
-        label = targets[index]
-        label_onehot = torch.nn.functional.one_hot(label, num_classes=num_classes)
-
-        el2n_score = torch.sqrt(l2_loss(label_onehot, output).sum(dim=1))  # ||.||=sqrt(sum(.)2)
-
-        # 将当前 epoch 的 el2n_score 保存到对应的位置
-        data_importance['el2n_all'][epoch_idx, index] = el2n_score  # data_importance['el2n_all'].shape = [10, 13932]
+        label = targets[index]                      # [256]
+        label_onehot = torch.nn.functional.one_hot(label, num_classes=num_classes)  # [256, 11]
         # breakpoint()
 
-    
+        # 对每个样本计算预测输出与真实标签之间的L2范数
+        el2n_score = torch.sqrt(l2_loss(label_onehot, output).sum(dim=1))  # ||.||=sqrt(sum(.)2) [256]
+  
+        # 每个样本的 el2n score (10 个epoch的累加)
+        data_importance['el2n'][index] += el2n_score  # original
+
+
     epoches = []
     print(f'td_log length: {len(td_log)}')  # 10800: organsmnist (all-data) Total iterations
+    # for each iteration
     for i, item in enumerate(td_log):
         # item: {'epoch': 0, 'iteration': 0, 'idx': tensor([...]), 'output': tensor([[..],..., [..]])}
         # len(item['idx']) = len(item['output']) = 256 (batch_size); len(item['output'][0]) = 11 (num_classes)
-        epoch_idx = item['epoch']  # 获取当前epoch索引
-        epoches.append(epoch_idx)
-        # el2n_score_list = []
+        epoches.append(item['epoch'])
         if i % 10000 == 0:
-            print('EL2N, td_log', i)
-        
-        # >>>>>>>>>> 1. calculate Variance
-        # 如果达到了early_max_epoch，计算方差
-        if epoch_idx == early_max_epoch:
-            print('epoches:', len(epoches))     # 540 (54*10)=(Iterationsper epoch * early_max_epoch)
-            el2n_var = torch.var(data_importance['el2n_all'], dim=0)  # 计算每个样本在 early_max_epoch 个 epoch 的 el2n_score 的方差
-            data_importance['el2n'] = el2n_var  # torch.Size([13932]) = len(trainset)
-
+            print('EL2N(), td_log', i)
+        # >>>>>>>>>> original:
+        if item['epoch'] == early_max_epoch:
+            print('epoches:', len(epoches))  # 540 (54*10)=(Iterationsper epoch * early_max_epoch)
+            print('data_importance', data_importance)  
+            # dict_keys(['entropy', 'loss', 'targets', 'correctness', 'forgetting', 'last_correctness', 'accumulated_margin', 'el2n'])
+            # data_importance['entropy'].shape=data_importance['el2n'].shape=len(trainset)=torch.Size([13932])
             breakpoint()
-            return 
-        
-        # 记录当前 epoch 的训练动态
-        record_training_dynamics(item, epoch_idx)
+            return
+        record_training_dynamics(item)
+        # >>>>>>>>>>
 
-
-
+        # >>>>>>>>>> 1 calculate Variance
+        # el2n_score_list: for each element, divide mean
         # >>>>>>>>>>
 
 
-        # # >>>>>>>>>> 2. early epoch and latter epoch
+        # # >>>>>>>>>> 2 early epoch and latter epoch
         # if (item['epoch'] <= early_max_epoch) or ((item['epoch'] > latter_min_epoch) and (item['epoch'] < latter_max_epoch)):
         #     record_training_dynamics(item)
         # else:
@@ -226,7 +221,7 @@ else:  # MedMNIST
     trainset = DataClass(split='train', transform=data_transform, download=download, as_rgb=as_rgb)
 
 trainset = IndexDataset(trainset)
-print(len(trainset))
+print('trainset:', len(trainset))
 
 data_importance = {}
 
