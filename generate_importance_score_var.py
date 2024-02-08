@@ -3,7 +3,6 @@ import numpy as np
 import torchvision
 from torchvision import datasets, transforms
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 import os, sys
 import argparse
@@ -136,7 +135,6 @@ def training_dynamics_metrics(td_log, dataset, data_importance):
 def EL2N(td_log, dataset, data_importance, early_max_epoch=10, later_min_epoch=100, later_max_epoch=120):
     targets = []
     data_size = len(dataset)
-    num_later_epochs = later_max_epoch - later_min_epoch
 
     for i in range(data_size):
         _, (_, y) = dataset[i]
@@ -147,14 +145,11 @@ def EL2N(td_log, dataset, data_importance, early_max_epoch=10, later_min_epoch=1
     data_importance['targets'] = targets.type(torch.int32)
     data_importance['el2n'] = torch.zeros(data_size).type(torch.float32)
 
-    # 分别存储 early epoch 和 later epoch 的 el2n_score
-    data_importance['el2n_early'] = torch.zeros((early_max_epoch, data_size)).type(torch.float32)   # torch.Size([10, 13932])
-    data_importance['el2n_later'] = torch.zeros((num_later_epochs, data_size)).type(torch.float32)  # torch.Size([10, 13932])
-    # breakpoint()
+    data_importance['el2n_early'] = torch.zeros((early_max_epoch, data_size)).type(torch.float32)  # 存储每个epoch的el2n_score
 
     l2_loss = torch.nn.MSELoss(reduction='none')
 
-    def record_training_dynamics(item, epoch_idx, phase):  # for each item in td_log
+    def record_training_dynamics(item, epoch_idx):  # for each item in td_log
         output = torch.exp(item['output'].type(torch.float))
         predicted = output.argmax(dim=1)
         index = item['idx'].type(torch.long)
@@ -165,67 +160,35 @@ def EL2N(td_log, dataset, data_importance, early_max_epoch=10, later_min_epoch=1
         el2n_score = torch.sqrt(l2_loss(label_onehot, output).sum(dim=1))  # ||.||=sqrt(sum(.)2)
 
         # 将当前 epoch 的 el2n_score 保存到对应的位置
-        if phase == 'early':
-            data_importance['el2n_early'][epoch_idx, index] = el2n_score  # data_importance['el2n_early'].shape = [10, 13932]
-        else:
-            data_importance['el2n_later'][epoch_idx-later_min_epoch, index] = el2n_score  # data_importance['el2n_later'].shape = [10, 13932]
+        data_importance['el2n_early'][epoch_idx, index] = el2n_score  # data_importance['el2n_early'].shape = [10, 13932]
+        # breakpoint()
 
     
     early_epoches = []
-    later_epoches = []
-    epoch_list = []
     print(f'td_log length: {len(td_log)}')  # 10800: organsmnist (all-data) Total iterations
-    # td_log_epoch = list(item['epoch'] for _, item in enumerate(td_log)) # 54个0, 54个1, ..., 54个199
     for i, item in enumerate(td_log):
         # item: {'epoch': 0, 'iteration': 0, 'idx': tensor([...]), 'output': tensor([[..],..., [..]])}
-        # item['idx'].shape = torch.Size([256]); item['output'].shape = torch.Size([256, 11]) (num_classes)
-        epoch_idx = item['epoch']  # 获取当前 epoch 索引
+        # len(item['idx']) = len(item['output']) = 256 (batch_size); len(item['output'][0]) = 11 (num_classes)
+        epoch_idx = item['epoch']  # 获取当前epoch索引
         
-        # el2n_score_list = []
         if i % 10000 == 0:
             print('EL2N, td_log', i)
         
         # 记录当前 epoch 的训练动态
-        if epoch_idx < early_max_epoch:  # 0~9
+        if epoch_idx < early_max_epoch:
             early_epoches.append(epoch_idx)
-            record_training_dynamics(item, epoch_idx, 'early')
-        elif (epoch_idx >= later_min_epoch) and (epoch_idx < later_max_epoch):  # 100~109
-            later_epoches.append(epoch_idx)
-            record_training_dynamics(item, epoch_idx, 'later')
-        if epoch_idx == later_max_epoch:
+            record_training_dynamics(item, epoch_idx)
+        
+        # >>>>>>>>>>>>>>> 1. calculate Variance
+        # 如果达到了early_max_epoch，计算方差
+        if epoch_idx == early_max_epoch:
             print('early_epoches:', len(early_epoches))     # 540 (54*10)=(Iterations_per_epoch * early_max_epoch)
-            print('later_epoches:', len(later_epoches))     # 540 (54*10)=(Iterations_per_epoch * later_epochs)
+            # 计算每个样本在 early_max_epoch 个 epoch 的 el2n_score 的方差
+            el2n_var = torch.var(data_importance['el2n_early'], dim=0)
+            data_importance['el2n'] = el2n_var  # torch.Size([13932]) = len(trainset)
 
-        # # >>>>>>>>>>>>>>> 1. calculate Variance
-        # # 如果达到了early_max_epoch，计算方差
-        # if epoch_idx == early_max_epoch:
-        #     print('early_epoches:', len(early_epoches))     # 540 (54*10)=(Iterations_per_epoch * early_max_epoch)
-        #     # 计算每个样本在 early_max_epoch 个 epoch 的 el2n_score 的方差
-        #     el2n_var = torch.var(data_importance['el2n_early'], dim=0)
-        #     data_importance['el2n'] = el2n_var  # torch.Size([13932]) = len(trainset)
-
-        #     return 
-        # # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-        # # >>>>>>>>>>>>>>> 2. early epoch and later epoch
-        if epoch_idx == early_max_epoch:    # 计算每个样本在 early_max_epoch 个 epoch 的 el2n_score 的方差
-            el2n_var_e = torch.var(data_importance['el2n_early'], dim=0)  # torch.Size([13932]) = len(trainset)
-            el2n_var_e_norm = F.normalize(el2n_var_e.unsqueeze(0), p=1, dim=1)  # 在第 0 维上增加一个维度后再归一化 
-            # breakpoint()
-        elif epoch_idx == later_max_epoch:  # 计算每个样本在 num_later_epoch 个 epoch 的 el2n_score 的方差
-            el2n_var_l = torch.var(data_importance['el2n_later'], dim=0)
-            el2n_var_l_norm = F.normalize(el2n_var_l.unsqueeze(0), p=1, dim=1)  # torch.Size([1, 13932])
-            el2n_var = torch.squeeze(el2n_var_e_norm + el2n_var_l_norm)     # torch.Size([13932])
-            data_importance['el2n'] = el2n_var
-            # # mean
-            # el2n_var = torch.stack((el2n_var_e, el2n_var_l), dim=0)       # torch.Size([2, 13932])
-            # data_importance['el2n'] = el2n_var.mean(dim=0)                # torch.Size([13932])
-            
-            return
-        # # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-        # # 记录当前 epoch 的训练动态
-        # record_training_dynamics(item, epoch_idx)
+            return 
+        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         
 #########################
 
@@ -274,7 +237,7 @@ with open(td_path, 'rb') as f:
 training_dynamics = pickled_data['training_dynamics']  # td_log
 early_max_epoch = 10
 later_min_epoch = 100
-later_max_epoch = 110
+later_max_epoch = 120
 
 post_training_metrics(model, trainloader, data_importance, device)
 training_dynamics_metrics(training_dynamics, trainset, data_importance)

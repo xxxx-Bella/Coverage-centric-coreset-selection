@@ -35,26 +35,35 @@ Except random pruning, we need to first calcualte the different importance score
 python generate_importance_score.py --gpuid 0 --base_dir ./data-model/cifar10 --task_name all-data
 
 # organamnist; organsmnist
-python generate_importance_score.py --dataset organamnist --gpuid 0 --base_dir ./data-model/organamnist --task_name all-data --as_rgb
-python generate_importance_score.py --dataset organsmnist --gpuid 0 --base_dir ./data-model/organsmnist --task_name all-data --as_rgb
 python generate_importance_score_original.py --dataset organsmnist --gpuid 0 --base_dir ./data-model/organsmnist --task_name all-data --as_rgb
+python generate_importance_score_var.py --dataset organsmnist --gpuid 0 --base_dir ./data-model/organsmnist --task_name all-data --as_rgb
+python generate_importance_score.py --dataset organsmnist --gpuid 0 --base_dir ./data-model/organsmnist --task_name all-data --as_rgb
 
 ```
 
 ### Train a model with a specific coreset selection method:
 Here we use 90% pruning rate on CIFAR10 as an example.
 
-**CCS with AUM**
+**EL2N**
 ```
-python train.py --dataset cifar10 --gpuid 0 --iterations 40000 --task_name ccs-0.1 --base_dir ./data-model/cifar10/ccs --coreset --coreset_mode stratified --data-score-path ./data-model/cifar10/all-data/data-score-all-data.pickle --coreset_key accumulated_margin --coreset_ratio 0.1 --mis_ratio 0.3
+python train.py --dataset cifar10 --gpuid 0 --iterations 40000 --task_name el2n-0.1 --base_dir ./data-model/cifar10/el2n --coreset --coreset_mode coreset --data-score-path ./data-model/cifar10/all-data/data-score-all-data.pickle --coreset_key el2n --coreset_ratio 0.1 --data-score-descending 1
 
 # organamnist: 0.3; organsmnist: 0.3
-python trainMed.py --dataset organamnist --gpuid 0 --iterations 20000 --task_name ccs-0.9-1 --base_dir ./data-model/organamnist/ccs --coreset --coreset_mode stratified --data-score-path ./data-model/organamnist/all-data/data-score-all-data.pickle --coreset_key accumulated_margin --coreset_ratio 0.9 --mis_ratio 0.3 --as_rgb
+python trainMed.py --dataset organamnist --gpuid 0 --iterations 40000 --task_name el2n-0.8-1 --base_dir ./data-model/organamnist/el2n --coreset --coreset_mode coreset --data-score-path ./data-model/organamnist/all-data/data-score-all-data.pickle --coreset_key el2n --coreset_ratio 0.8 --data-score-descending 1 --as_rgb
 
-python trainMed.py --dataset organsmnist --gpuid 0 --iterations 40000 --task_name ccs-0.9-1 --base_dir ./data-model/organsmnist/ccs --coreset --coreset_mode stratified --data-score-path ./data-model/organsmnist/all-data/data-score-all-data.pickle --coreset_key accumulated_margin --coreset_ratio 0.9 --mis_ratio 0.3 --as_rgb
+python trainMed.py --dataset organsmnist --gpuid 0 --iterations 40000 --task_name el2n-0.1-1 --base_dir ./data-model/organsmnist/el2n --coreset --coreset_mode coreset --data-score-path ./data-model/organsmnist/all-data/data-score-all-data.pickle --coreset_key el2n --coreset_ratio 0.1 --data-score-descending 1 --as_rgb
 
+# 1. Variance
+python trainMed.py --dataset organsmnist --gpuid 0 --iterations 20000 --task_name el2n-var-0.7-1 --base_dir ./data-model/organsmnist/el2n --coreset --coreset_mode coreset --data-score-path ./data-model/organsmnist/all-data/data-score-all-data.pickle --coreset_key el2n --coreset_ratio 0.7 --data-score-descending 1 --as_rgb
+
+# 2. Epoch
+python trainMed.py --dataset organsmnist --gpuid 0 --iterations 20000 --task_name el2n-phase-0.3-1 --base_dir ./data-model/organsmnist/el2n --coreset --coreset_mode coreset --data-score-path ./data-model/organsmnist/all-data/data-score-all-data.pickle --coreset_key el2n --coreset_ratio 0.3 --data-score-descending 1 --as_rgb
+
+# 3. Variance + Epoch
+python trainMed.py --dataset organsmnist --gpuid 0 --iterations 20000 --task_name el2n-var-phase-0.4-1 --base_dir ./data-model/organsmnist/el2n --coreset --coreset_mode coreset --data-score-path ./data-model/organsmnist/all-data/data-score-all-data.pickle --coreset_key el2n --coreset_ratio 0.4 --data-score-descending 1 --as_rgb
 
 ```
+
 
 **Random**
 ```
@@ -87,21 +96,17 @@ python trainMed.py --dataset organsmnist --gpuid 0 --iterations 20000 --task_nam
 
 ```
 
-**EL2N**
+**CCS with AUM**
 ```
-python train.py --dataset cifar10 --gpuid 0 --iterations 40000 --task_name el2n-0.1 --base_dir ./data-model/cifar10/el2n --coreset --coreset_mode coreset --data-score-path ./data-model/cifar10/all-data/data-score-all-data.pickle --coreset_key el2n --coreset_ratio 0.1 --data-score-descending 1
+python train.py --dataset cifar10 --gpuid 0 --iterations 40000 --task_name ccs-0.1 --base_dir ./data-model/cifar10/ccs --coreset --coreset_mode stratified --data-score-path ./data-model/cifar10/all-data/data-score-all-data.pickle --coreset_key accumulated_margin --coreset_ratio 0.1 --mis_ratio 0.3
 
 # organamnist: 0.3; organsmnist: 0.3
-python trainMed.py --dataset organamnist --gpuid 0 --iterations 40000 --task_name el2n-0.8-1 --base_dir ./data-model/organamnist/el2n --coreset --coreset_mode coreset --data-score-path ./data-model/organamnist/all-data/data-score-all-data.pickle --coreset_key el2n --coreset_ratio 0.8 --data-score-descending 1 --as_rgb
+python trainMed.py --dataset organamnist --gpuid 0 --iterations 20000 --task_name ccs-0.9-1 --base_dir ./data-model/organamnist/ccs --coreset --coreset_mode stratified --data-score-path ./data-model/organamnist/all-data/data-score-all-data.pickle --coreset_key accumulated_margin --coreset_ratio 0.9 --mis_ratio 0.3 --as_rgb
 
-python trainMed.py --dataset organsmnist --gpuid 0 --iterations 40000 --task_name el2n-0.1-1 --base_dir ./data-model/organsmnist/el2n --coreset --coreset_mode coreset --data-score-path ./data-model/organsmnist/all-data/data-score-all-data.pickle --coreset_key el2n --coreset_ratio 0.1 --data-score-descending 1 --as_rgb
+python trainMed.py --dataset organsmnist --gpuid 0 --iterations 40000 --task_name ccs-0.9-1 --base_dir ./data-model/organsmnist/ccs --coreset --coreset_mode stratified --data-score-path ./data-model/organsmnist/all-data/data-score-all-data.pickle --coreset_key accumulated_margin --coreset_ratio 0.9 --mis_ratio 0.3 --as_rgb
 
-# 1. Variance
-python trainMed.py --dataset organsmnist --gpuid 0 --iterations 40000 --task_name el2n-var-0.3 --base_dir ./data-model/organsmnist/el2n --coreset --coreset_mode coreset --data-score-path ./data-model/organsmnist/all-data/data-score-all-data.pickle --coreset_key el2n --coreset_ratio 0.3 --data-score-descending 1 --as_rgb
-
-# 2. Epoch
-python trainMed.py --dataset organsmnist
 ```
+
 
 # ImageNet training code
 ```
