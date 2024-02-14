@@ -178,7 +178,7 @@ def EL2N(td_log, dataset, data_importance, early_max_epoch=10, latter_min_epoch=
             print('data_importance', data_importance)  
             # dict_keys(['entropy', 'loss', 'targets', 'correctness', 'forgetting', 'last_correctness', 'accumulated_margin', 'el2n'])
             # data_importance['entropy'].shape=data_importance['el2n'].shape=len(trainset)=torch.Size([13932])
-            breakpoint()
+            # breakpoint()
             return
         record_training_dynamics(item)
         # >>>>>>>>>>
@@ -187,12 +187,7 @@ def EL2N(td_log, dataset, data_importance, early_max_epoch=10, latter_min_epoch=
         # el2n_score_list: for each element, divide mean
         # >>>>>>>>>>
 
-
         # # >>>>>>>>>> 2 early epoch and latter epoch
-        # if (item['epoch'] <= early_max_epoch) or ((item['epoch'] > latter_min_epoch) and (item['epoch'] < latter_max_epoch)):
-        #     record_training_dynamics(item)
-        # else:
-        #     return
         # # >>>>>>>>>>
         
 #########################

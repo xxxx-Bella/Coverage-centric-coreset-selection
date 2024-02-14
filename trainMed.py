@@ -137,6 +137,7 @@ coreset_key = args.coreset_key
 coreset_ratio = args.coreset_ratio
 coreset_descending = (args.data_score_descending == 1)
 total_num = len(trainset)
+print('before coreset selection, trainset:', total_num)
 
 if args.coreset:
     if args.coreset_mode != 'random':
