@@ -25,11 +25,9 @@ class Trainer(object):
             print('*' * 26)
         for batch_idx, (idx, (inputs, targets)) in enumerate(dataloader):
             inputs, targets = inputs.cuda(non_blocking=True), targets.cuda(non_blocking=True)
-            targets = targets.squeeze()  # if MedMNIST
             optimizer.zero_grad()
             outputs = model(inputs)
             loss = criterion(outputs, targets)
-            # print(f'loss={loss}')
             loss.backward()
             optimizer.step()
 
@@ -76,7 +74,6 @@ class Trainer(object):
         with torch.no_grad():
             for batch_idx, (inputs, targets) in enumerate(dataloader):
                 inputs, targets = inputs.to(device), targets.to(device)
-                targets = targets.squeeze()  # if MedMNIST
                 outputs = model(inputs)
                 loss = criterion(outputs, targets)
 
