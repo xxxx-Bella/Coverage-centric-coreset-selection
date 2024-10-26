@@ -47,7 +47,7 @@ python train.py --dataset cifar10 --gpuid 0 --iterations 40000 --task_name rando
 python train.py --dataset cifar10 --gpuid 0 --iterations 40000 --task_name forgetting-0.1 --base_dir ./data-model/cifar10/forgetting --coreset --coreset_mode coreset --data-score-path ./data-model/cifar10/all-data/data-score-all-data.pickle --coreset_key forgetting --coreset_ratio 0.1 --data-score-descending 1
 ```
 
-**AUM**Retrieving data. Wait a few seconds and try to cut or copy again.
+**AUM**
 ```
 python train.py --dataset cifar10 --gpuid 0 --iterations 40000 --task_name accumulated_margin-0.1 --base_dir ./data-model/cifar10/accumulated_margin --coreset --coreset_mode coreset --data-score-path ./data-model/cifar10/all-data/data-score-all-data.pickle --coreset_key accumulated_margin --coreset_ratio 0.1 --data-score-descending 0
 ```
