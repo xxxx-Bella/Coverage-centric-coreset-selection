@@ -174,12 +174,8 @@ if args.dataset in ['cifar10', 'svhn', 'cinic10']:
 else:
     num_classes=100
 
-if args.network == 'resnet18':
-    print('resnet18')
-    model = resnet('resnet18', num_classes=num_classes, device=device)
-if args.network == 'resnet50':
-    print('resnet50')
-    model = resnet('resnet50', num_classes=num_classes, device=device)
+
+model = resnet('resnet18', num_classes=num_classes, device=device)
 
 model = model.to(device)
 
